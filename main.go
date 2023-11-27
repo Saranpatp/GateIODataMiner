@@ -1,21 +1,37 @@
 package main
 
 import (
-    "fmt"
-    "io"
-    "log"
-    "net/http"
-    "os"
-    "path/filepath"
-    "strings"
-    "time"
+	"bufio"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"sync"
+	"time"
 
-    "github.com/joho/godotenv"
+	"github.com/joho/godotenv"
 )
 
-func downloadFile(url string, filepath string) error {
+var (
+    client *http.Client
+    wg     sync.WaitGroup
+    semaphore chan struct{}
+)
+
+func init() {
+    client = &http.Client{}
+    semaphore = make(chan struct{}, 5) // Buffered channel with capacity of 5
+}
+
+func downloadFile(url, filepath string) error {
+    defer wg.Done()
+    defer func() { <-semaphore }() // Release semaphore after download is complete
+
     // Get the data
-    resp, err := http.Get(url)
+    resp, err := client.Get(url)
     if err != nil {
         return err
     }
@@ -28,10 +44,15 @@ func downloadFile(url string, filepath string) error {
     }
     defer out.Close()
 
+    // Buffered writing
+    bufWriter := bufio.NewWriter(out)
+    defer bufWriter.Flush()
+
     // Write the body to file
-    _, err = io.Copy(out, resp.Body)
+    _, err = io.Copy(bufWriter, resp.Body)
     return err
 }
+
 
 func main() {
     // Load .env file
@@ -83,16 +104,25 @@ func main() {
 					if dataType == "orderbooks" {
 						// Handle hourly logs for order books
 						for hour := 0; hour < 24; hour++ {
+                            wg.Add(1)
+
+                            semaphore <- struct{}{} // Acquire a slot in the semaphore
+
+                            go func(hour int) {
 							hourStr := fmt.Sprintf("%02d", hour)
 							url := fmt.Sprintf("%s%s/%s/%d%s/%s-%d%s%s%s.csv.gz", baseurl, biz, dataType, year, month, market, year, month, day, hourStr)
 							filepath := filepath.Join(bizDir, fmt.Sprintf("%s-%s-%d%s%s%s.csv.gz", market, dataType, year, month, day, hourStr))
-			
+                                
 							fmt.Println("Downloading", url)
-							if err := downloadFile(url, filepath); err != nil {
-								fmt.Println("Error downloading file:", err)
-							}
+                                if err := downloadFile(url, filepath); err != nil {
+                                    fmt.Println("Error downloading file:", err)
+                                }
+                            }(hour)
 						}
 					} else {
+                        wg.Add(1)
+                        semaphore <- struct{}{} // Acquire a slot in the semaphore
+                        go func() {
 						// Handle other data types
 						url := fmt.Sprintf("%s%s/%s/%d%s/%s-%d%s.csv.gz", baseurl, biz, dataType, year, month, market, year, month)
 						filepath := filepath.Join(bizDir, fmt.Sprintf("%s-%s-%d%s.csv.gz", market, dataType, year, month))
@@ -101,9 +131,11 @@ func main() {
 						if err := downloadFile(url, filepath); err != nil {
 							fmt.Println("Error downloading file:", err)
 						}
+                        }()
 					}
 				}
 			}
         }
     }
+    wg.Wait()
 }
