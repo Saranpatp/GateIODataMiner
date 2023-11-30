@@ -1,8 +1,6 @@
 # Gate.io Crypto Data Mining (Historical Data)
 Easily set up and deploy your crypto data mining application 
 
-**NOTED:** you will need parser to be able to use with Strategy Studio.
-
 ## 🚀 Getting Started
 
 ### 🔧 Prerequisites
