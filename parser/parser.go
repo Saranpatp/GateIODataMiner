@@ -38,7 +38,7 @@ func main() {
 	}
 
 	// Semaphore channel to limit goroutine
-	semaphore := make(chan struct{}, 5)
+	semaphore := make(chan struct{}, 8)
 
 	var wg sync.WaitGroup
 

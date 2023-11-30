@@ -23,7 +23,7 @@ var (
 
 func init() {
 	client = &http.Client{}
-	semaphore = make(chan struct{}, 5) // Buffered channel with capacity of 5
+	semaphore = make(chan struct{}, 8) // Buffered channel with capacity of 5
 }
 
 func downloadFile(url, filepath string) error {
