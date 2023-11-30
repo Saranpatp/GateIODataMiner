@@ -109,6 +109,9 @@ func processFolder(folderPath string, foldername string, tickername string) {
 }
 
 func processFile(filePath string, foldername string, tickername string) {
+	// For demonstration purposes, just printing the file name
+	log.Printf("Processing file: %s\n", filePath)
+	
 	colsMapping := map[string]int{
 		"timestamp": 0,
 		"side":      1,
@@ -194,8 +197,7 @@ func processFile(filePath string, foldername string, tickername string) {
 		log.Fatal(err)
 	}
 
-	// For demonstration purposes, just printing the file name
-	log.Printf("Processing file: %s\n", filePath)
+	
 
 }
 
