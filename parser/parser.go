@@ -205,7 +205,7 @@ func processFile(filePath string, foldername string, tickername string) {
 func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldername string, tickername string) error {
 
 	// Ensure the directory exists
-	dirPath := fmt.Sprintf("../parsed_data/%s", tickername)
+	dirPath := fmt.Sprintf("parsed_data/%s", tickername)
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		return err
 	}
