@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -36,11 +37,28 @@ func main() {
 		}
 	}
 
+	// Semaphore channel to limit goroutine
+	semaphore := make(chan struct{}, 5)
+
+	var wg sync.WaitGroup
+
 	// Process each file
 	for _, tickername := range tickerFolder {
-		fullPath := dir + "/" + tickername
-		processTicker(fullPath, tickername)
+		wg.Add(1)
+
+		semaphore <- struct{}{}
+
+		go func(tickerName string) {
+			defer wg.Done()
+
+			fullPath := dir + "/" + tickerName
+			processTicker(fullPath, tickerName)
+
+			<-semaphore
+		}(tickername)
 	}
+
+	wg.Wait()
 }
 func processTicker(tickerFolderPath string, tickername string) {
 	dir := "../data/BTC_USDT/spot/orderbooks" // Replace with your directory path
@@ -236,8 +254,6 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 					return err
 				}
 			}
-			fmt.Println(ssFormattedStr)
-
 		}
 	}
 
