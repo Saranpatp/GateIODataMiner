@@ -60,7 +60,7 @@ Docker simplifies deployment by containerizing the application and its environme
    docker-compose ps
    ```
 
-### Running Locally
+### Running Locally (Recommended)
 
 If you prefer to run the application directly on your local machine, follow these steps:
 
@@ -74,7 +74,7 @@ If you prefer to run the application directly on your local machine, follow thes
 2. **Start the Application**  
    Once all dependencies are installed, start the application by running:
    ```bash
-   go run main.go
+   ./run.sh
    ```
-   This command compiles and executes the `main.go` file, starting the application.
+   This command compiles and executes the `parser/parser.go` and `downloader/downloader.go` files which will start downloading and parsing the data.
 
