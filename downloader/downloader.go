@@ -68,8 +68,8 @@ func main() {
 	bizTypes := []string{"spot", "futures_usdt"}
 
 	bizTypeToDataTypes := map[string][]string{
-		"spot":         {"deals", "orderbooks", "candlesticks"},
-		"futures_usdt": {"trades", "orderbooks", "mark_prices", "funding_updates", "funding_applies"},
+		"spot":         {"orderbooks"},// {"deals", "orderbooks", "candlesticks"},
+		// "futures_usdt": {"trades", "orderbooks", "mark_prices", "funding_updates", "funding_applies"},
 	}
 
 	start, _ := time.Parse("2006-01-02", startDateStr)
