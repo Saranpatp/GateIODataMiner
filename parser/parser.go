@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -75,7 +76,7 @@ func processTicker(tickerFolderPath string, tickername string) {
 		if entry.IsDir() {
 			folders = append(folders, entry.Name())
 		}
-	}
+	
 
 	sort.Strings(folders)
 
@@ -124,14 +125,15 @@ func processFile(filePath string, foldername string, tickername string) {
 	// Open the gzip file
 	gzFile, err := os.Open(filePath)
 	if err != nil {
-		log.Fatal(err)
+		log.printf("Failed to open %s : %s", filepath,err)
+		return
 	}
 	defer gzFile.Close()
 
 	// Decompress the gzip file
 	gzReader, err := gzip.NewReader(gzFile)
 	if err != nil {
-		fmt.Printf("Failed To decompressed %s : %s",filePath,err)
+		log.Printf("Failed To decompressed %s : %s",filePath,err)
 		return
 	}
 	defer gzReader.Close()
@@ -148,7 +150,8 @@ func processFile(filePath string, foldername string, tickername string) {
 			if err == io.EOF {
 				break // End of file
 			}
-			log.Fatal(err)
+			log.printf("Failed to read record: %s", err)
+			continue
 		}
 
 		timestamp := record[colsMapping["timestamp"]]
@@ -164,7 +167,7 @@ func processFile(filePath string, foldername string, tickername string) {
 
 		amount, err := strconv.ParseFloat(amountStr, 64)
 		if err != nil {
-			fmt.Println("Error parsing amount to float :", err)
+			log.Println("Error parsing amount to float :", err)
 			continue
 		}
 
@@ -214,7 +217,7 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 	//formated date for save filename
 	t, err := time.Parse("2006-01-02", foldername)
 	if err != nil {
-		fmt.Println("Error parsing date:", err)
+		log.Println("Error parsing date:", err)
 		return err
 	}
 	formattedDate := t.Format("20060102")
