@@ -131,7 +131,8 @@ func processFile(filePath string, foldername string, tickername string) {
 	// Decompress the gzip file
 	gzReader, err := gzip.NewReader(gzFile)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Printf("Failed To decompressed %s : %s",filePath,err)
+		return
 	}
 	defer gzReader.Close()
 
