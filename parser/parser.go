@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -22,7 +21,7 @@ type CumulativeAmounts struct {
 }
 
 func main() {
-	dir := "data" //BTC_USDT/spot/orderbooks" // Replace with your directory path
+	dir := "test_data" //BTC_USDT/spot/orderbooks" // Replace with your directory path
 
 	// Read the directory contents
 	entries, err := os.ReadDir(dir)
@@ -76,7 +75,7 @@ func processTicker(tickerFolderPath string, tickername string) {
 		if entry.IsDir() {
 			folders = append(folders, entry.Name())
 		}
-	
+	}
 
 	sort.Strings(folders)
 
@@ -125,8 +124,7 @@ func processFile(filePath string, foldername string, tickername string) {
 	// Open the gzip file
 	gzFile, err := os.Open(filePath)
 	if err != nil {
-		log.printf("Failed to open %s : %s", filepath,err)
-		return
+		log.Fatal(err)
 	}
 	defer gzFile.Close()
 
@@ -150,7 +148,7 @@ func processFile(filePath string, foldername string, tickername string) {
 			if err == io.EOF {
 				break // End of file
 			}
-			log.printf("Failed to read record: %s", err)
+			log.Printf("Fail to read the record %s", err)
 			continue
 		}
 
@@ -195,7 +193,6 @@ func processFile(filePath string, foldername string, tickername string) {
 			}
 		}
 	}
-	// TODO: add formatter here
 	err = ssFormatter(&amountsMap, foldername, tickername)
 	if err != nil {
 		log.Fatal(err)
@@ -217,7 +214,7 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 	//formated date for save filename
 	t, err := time.Parse("2006-01-02", foldername)
 	if err != nil {
-		log.Println("Error parsing date:", err)
+		fmt.Println("Error parsing date:", err)
 		return err
 	}
 	formattedDate := t.Format("20060102")
