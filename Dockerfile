@@ -11,8 +11,10 @@ RUN go mod download
 # Copy the rest of the source code
 COPY . .
 
-# Build the Go app
-RUN go build -o gateio_crypto_mining
+# Copy the run script
+COPY run.sh .
+RUN chmod +x run.sh
 
-# Run the Go executable when the container launches
-CMD ["./gateio_crypto_mining"]
+
+# Run the script when the container launches
+CMD ["./run.sh"]

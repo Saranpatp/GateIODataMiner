@@ -21,7 +21,7 @@ type CumulativeAmounts struct {
 }
 
 func main() {
-	dir := "data/" //BTC_USDT/spot/orderbooks" // Replace with your directory path
+	dir := "data" //BTC_USDT/spot/orderbooks" // Replace with your directory path
 
 	// Read the directory contents
 	entries, err := os.ReadDir(dir)
@@ -111,7 +111,7 @@ func processFolder(folderPath string, foldername string, tickername string) {
 func processFile(filePath string, foldername string, tickername string) {
 	// For demonstration purposes, just printing the file name
 	log.Printf("Processing file: %s\n", filePath)
-	
+
 	colsMapping := map[string]int{
 		"timestamp": 0,
 		"side":      1,
