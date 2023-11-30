@@ -21,7 +21,7 @@ type CumulativeAmounts struct {
 }
 
 func main() {
-	dir := "../data/" //BTC_USDT/spot/orderbooks" // Replace with your directory path
+	dir := "data/" //BTC_USDT/spot/orderbooks" // Replace with your directory path
 
 	// Read the directory contents
 	entries, err := os.ReadDir(dir)
@@ -61,7 +61,7 @@ func main() {
 	wg.Wait()
 }
 func processTicker(tickerFolderPath string, tickername string) {
-	dir := "../data/BTC_USDT/spot/orderbooks" // Replace with your directory path
+	dir := tickerFolderPath+"/spot/orderbooks" // Replace with your directory path
 
 	// Read the directory contents
 	entries, err := os.ReadDir(dir)
