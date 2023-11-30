@@ -245,13 +245,13 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 
 			var ssFormattedStr string
 			if amounts.BuyAmount != 0 {
-				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f", collectionTime, sourceTime, amounts.BeginID, 'T', "gate", 1, price, amounts.BuyAmount)
+				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f", collectionTime, sourceTime, amounts.BeginID, 'P', "gate", 1, price, amounts.BuyAmount)
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
 			}
 			if amounts.SellAmount != 0 {
-				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f", collectionTime, sourceTime, amounts.BeginID, 'T', "gate", 2, price, amounts.SellAmount)
+				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f", collectionTime, sourceTime, amounts.BeginID, 'P', "gate", 2, price, amounts.SellAmount)
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
