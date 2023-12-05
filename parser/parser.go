@@ -21,7 +21,7 @@ type CumulativeAmounts struct {
 }
 
 func main() {
-	dir := "test_data" //BTC_USDT/spot/orderbooks" // Replace with your directory path
+	dir := "data" //BTC_USDT/spot/orderbooks" // Replace with your directory path
 
 	// Read the directory contents
 	entries, err := os.ReadDir(dir)
@@ -206,7 +206,7 @@ func processFile(filePath string, foldername string, tickername string) {
 func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldername string, tickername string) error {
 
 	// Ensure the directory exists
-	dirPath := fmt.Sprintf("parsed_data/%s", tickername)
+	dirPath := fmt.Sprintf("parsed_data")
 	if err := os.MkdirAll(dirPath, 0755); err != nil {
 		return err
 	}
@@ -218,7 +218,8 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 		return err
 	}
 	formattedDate := t.Format("20060102")
-	saveFilePath := fmt.Sprintf("%s/tick_%s_%s.txt", dirPath, tickername, formattedDate)
+	modedTickerName := strings.Replace(tickername, "_", "", -1)
+	saveFilePath := fmt.Sprintf("%s/tick_%s_%s.txt", dirPath, modedTickerName, formattedDate)
 
 	file, err := os.OpenFile(saveFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
