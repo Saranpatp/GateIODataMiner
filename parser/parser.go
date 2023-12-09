@@ -1,12 +1,14 @@
 package main
 
 import (
+	"archive/tar"
 	"compress/gzip"
 	"encoding/csv"
 	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -59,9 +61,18 @@ func main() {
 	}
 
 	wg.Wait()
+	dirPath := fmt.Sprintf("parsed_data")
+	tarGzPath := "parsed_data.tar.gz"
+
+	err = compressToTarGz(dirPath, tarGzPath)
+	if err != nil {
+		log.Fatalf("Error compressing directory: %v", err)
+	}
+	log.Println("Directory compressed successfully.")
+
 }
 func processTicker(tickerFolderPath string, tickername string) {
-	dir := tickerFolderPath+"/spot/orderbooks" // Replace with your directory path
+	dir := tickerFolderPath + "/spot/orderbooks" // Replace with your directory path
 
 	// Read the directory contents
 	entries, err := os.ReadDir(dir)
@@ -131,7 +142,7 @@ func processFile(filePath string, foldername string, tickername string) {
 	// Decompress the gzip file
 	gzReader, err := gzip.NewReader(gzFile)
 	if err != nil {
-		log.Printf("Failed To decompressed %s : %s",filePath,err)
+		log.Printf("Failed To decompressed %s : %s", filePath, err)
 		return
 	}
 	defer gzReader.Close()
@@ -198,8 +209,6 @@ func processFile(filePath string, foldername string, tickername string) {
 		log.Fatal(err)
 	}
 
-	
-
 }
 
 // Dont parse price just yet for prevent floating point error
@@ -263,4 +272,52 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 
 	return nil
 
+}
+
+func compressToTarGz(srcDir, tarGzPath string) error {
+	// Create output file
+	outFile, err := os.Create(tarGzPath)
+	if err != nil {
+		return err
+	}
+	defer outFile.Close()
+
+	// Set up the gzip writer
+	gzipWriter := gzip.NewWriter(outFile)
+	defer gzipWriter.Close()
+
+	// Set up the tar writer
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	// Walk through the source directory
+	err = filepath.Walk(srcDir, func(file string, fi os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		// Create a header
+		header, err := tar.FileInfoHeader(fi, fi.Name())
+		if err != nil {
+			return err
+		}
+		header.Name = filepath.ToSlash(file)
+
+		// Write file header
+		if err := tarWriter.WriteHeader(header); err != nil {
+			return err
+		}
+		// If it's not a directory, write file content
+		if !fi.Mode().IsDir() {
+			file, err := os.Open(file)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			_, err = io.Copy(tarWriter, file)
+			return err
+		}
+		return nil
+	})
+
+	return err
 }
