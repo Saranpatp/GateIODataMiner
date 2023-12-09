@@ -229,7 +229,7 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 	for timestampStr, priceMap := range *amountsMap {
 		for price, amounts := range priceMap {
 			// parser time
-			collectionTime := fmt.Sprintf("%s.%06d", time.Now().Format("2006-01-02 15:04:05"), 0)
+			// collectionTime := fmt.Sprintf("%s.%06d", time.Now().Format("2006-01-02 15:04:05"), 0)
 
 			floatSourceTime, err := strconv.ParseFloat(timestampStr, 64)
 			if err != nil {
@@ -247,13 +247,13 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 
 			var ssFormattedStr string
 			if amounts.BuyAmount != 0 {
-				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f", collectionTime, sourceTime, amounts.BeginID, 'P', "gate", 1, price, amounts.BuyAmount)
+				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f,,,,0", sourceTime, sourceTime, amounts.BeginID, 'P', "IEX", 1, price, amounts.BuyAmount)
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
 			}
 			if amounts.SellAmount != 0 {
-				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f", collectionTime, sourceTime, amounts.BeginID, 'P', "gate", 2, price, amounts.SellAmount)
+				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f,,,,0", sourceTime, sourceTime, amounts.BeginID, 'P', "IEX", 2, price, amounts.BuyAmount)
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
