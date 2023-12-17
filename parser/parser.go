@@ -189,14 +189,9 @@ func processFile(filePath string, foldername string, tickername string) {
 			amountsMap[timestamp] = make(map[string]*CumulativeAmounts)
 		}
 		// Check if the price map exists for the timestamp, if not, create it
-		if timestamp == "1641085200.4"{
-			fmt.Printf("time: %s, action: %s, price: %s , amount %s \n",timestamp,action, priceStr, amountStr)
-		}
+
 		if _, exists := amountsMap[timestamp][priceStr]; !exists {
 			amountsMap[timestamp][priceStr] = &CumulativeAmounts{}
-			if timestamp == "1641085200.4"{
-				fmt.Println(exists)
-			}
 		}
 		
 		// Add begin id
@@ -262,9 +257,6 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 			// Handle microseconds
 			microseconds := int64((floatSourceTime - float64(intSourceTime)) * 1e6)
 			sourceTime := fmt.Sprintf("%s.%06d", t.UTC().Format("2006-01-02 15:04:05"), microseconds)
-			if timestampStr == "1641085200.4"{
-				fmt.Println(sourceTime)
-			}
 			const epsilon = 0.00000001
 
 			// floatPrice, err := strconv.ParseFloat(price,64)
