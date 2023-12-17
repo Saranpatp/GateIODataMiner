@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -19,6 +20,7 @@ import (
 type CumulativeAmounts struct {
 	BuyAmount  float64
 	SellAmount float64
+	SetAmount float64
 	BeginID    string
 }
 
@@ -169,10 +171,12 @@ func processFile(filePath string, foldername string, tickername string) {
 		priceStr := record[colsMapping["price"]]
 		beginId := record[colsMapping["begin_id"]]
 
-		// Ignore if action is "set"
-		if action == "set" {
-			continue
-		}
+		// // Ignore if action is "set"
+		// if action == "set" {
+		// 	continue
+		// }
+
+		
 
 		amount, err := strconv.ParseFloat(amountStr, 64)
 		if err != nil {
@@ -183,26 +187,30 @@ func processFile(filePath string, foldername string, tickername string) {
 		// Check if the timestamp map exists, if not, create it
 		if _, exists := amountsMap[timestamp]; !exists {
 			amountsMap[timestamp] = make(map[string]*CumulativeAmounts)
-
-			// Check if the timestamp map exists, if not, create it
-			if _, exists := amountsMap[timestamp]; !exists {
-				amountsMap[timestamp] = make(map[string]*CumulativeAmounts)
-			}
-
-			// Check if the price map exists for the timestamp, if not, create it
-			if _, exists := amountsMap[timestamp][priceStr]; !exists {
-				amountsMap[timestamp][priceStr] = &CumulativeAmounts{}
-			}
-			// Add begin id
-			amountsMap[timestamp][priceStr].BeginID = beginId
-			// Update sell or buy amount
-			switch action {
-			case "make":
-				amountsMap[timestamp][priceStr].BuyAmount += amount
-			case "take":
-				amountsMap[timestamp][priceStr].SellAmount += amount
+		}
+		// Check if the price map exists for the timestamp, if not, create it
+		if timestamp == "1641085200.4"{
+			fmt.Printf("time: %s, action: %s, price: %s , amount %s \n",timestamp,action, priceStr, amountStr)
+		}
+		if _, exists := amountsMap[timestamp][priceStr]; !exists {
+			amountsMap[timestamp][priceStr] = &CumulativeAmounts{}
+			if timestamp == "1641085200.4"{
+				fmt.Println(exists)
 			}
 		}
+		
+		// Add begin id
+		amountsMap[timestamp][priceStr].BeginID = beginId
+		// Update sell or buy amount
+		switch action {
+		case "make":
+			amountsMap[timestamp][priceStr].BuyAmount += amount
+		case "take":
+			amountsMap[timestamp][priceStr].SellAmount += amount
+		case "set":
+			amountsMap[timestamp][priceStr].SetAmount += amount
+		}
+		
 	}
 	err = ssFormatter(&amountsMap, foldername, tickername)
 	if err != nil {
@@ -236,10 +244,11 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 	}
 	defer file.Close()
 	for timestampStr, priceMap := range *amountsMap {
+		// var prev_bbo float64
 		for price, amounts := range priceMap {
 			// parser time
 			// collectionTime := fmt.Sprintf("%s.%06d", time.Now().Format("2006-01-02 15:04:05"), 0)
-
+			
 			floatSourceTime, err := strconv.ParseFloat(timestampStr, 64)
 			if err != nil {
 				return err
@@ -253,20 +262,44 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 			// Handle microseconds
 			microseconds := int64((floatSourceTime - float64(intSourceTime)) * 1e6)
 			sourceTime := fmt.Sprintf("%s.%06d", t.UTC().Format("2006-01-02 15:04:05"), microseconds)
+			if timestampStr == "1641085200.4"{
+				fmt.Println(sourceTime)
+			}
+			const epsilon = 0.00000001
 
+			// floatPrice, err := strconv.ParseFloat(price,64)
+			// if err != nil {
+			// 	return err
+			// }
+
+			// configured BBO first 
 			var ssFormattedStr string
-			if amounts.BuyAmount != 0 {
+
+			// if math.Abs(amounts.BuyAmount - 0) > epsilon && math.Abs(amounts.BuyAmount - 0) > epsilon {
+			// 	// prev_bbo, err = strconv.ParseFloat(price,64) // set as bbo
+			// 	// if err != nil {
+			// 	// 	return err
+			// 	// }
+
+			// 	ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f, %s, %f,,", sourceTime, sourceTime, amounts.BeginID, 'Q', "IEX", 1, price,amounts.BuyAmount, price, amounts.SellAmount)
+			// 	if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
+			// 		return err
+			// 	}
+			// }
+
+			if math.Abs(amounts.BuyAmount - 0.0) > epsilon {
 				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f,,,,0", sourceTime, sourceTime, amounts.BeginID, 'P', "IEX", 1, price, amounts.BuyAmount)
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
 			}
-			if amounts.SellAmount != 0 {
-				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f,,,,0", sourceTime, sourceTime, amounts.BeginID, 'P', "IEX", 2, price, amounts.BuyAmount)
+			if math.Abs(amounts.SellAmount - 0.0) > epsilon {
+				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f,,,,0", sourceTime, sourceTime, amounts.BeginID, 'P', "IEX", 2, price, amounts.SellAmount)
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
 			}
+			
 		}
 	}
 
