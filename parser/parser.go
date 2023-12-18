@@ -24,6 +24,14 @@ type CumulativeAmounts struct {
 	BeginID    string
 }
 
+type BBO struct {
+	BestBid float64
+	BuyAmount float64
+	BestAsk float64
+	SellAmount float64
+	BeginID string
+}
+
 func main() {
 	dir := "data" //BTC_USDT/spot/orderbooks" // Replace with your directory path
 
@@ -172,11 +180,9 @@ func processFile(filePath string, foldername string, tickername string) {
 		beginId := record[colsMapping["begin_id"]]
 
 		// // Ignore if action is "set"
-		// if action == "set" {
-		// 	continue
-		// }
-
-		
+		if action == "set" {
+			continue
+		}
 
 		amount, err := strconv.ParseFloat(amountStr, 64)
 		if err != nil {
@@ -238,34 +244,36 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 		return err
 	}
 	defer file.Close()
+
+	var bbo BBO
+
+
 	for timestampStr, priceMap := range *amountsMap {
+
+				// parser time
+		// collectionTime := fmt.Sprintf("%s.%06d", time.Now().Format("2006-01-02 15:04:05"), 0)
+		floatSourceTime, err := strconv.ParseFloat(timestampStr, 64)
+		if err != nil {
+			return err
+		}
+		intSourceTime := int64(floatSourceTime)
+		// Convert Unix timestamp to time.Time
+		t := time.Unix(intSourceTime, 0)
+		// Format as string (YYYY-MM-DD HH:MM:SS.microseconds)
+		// Handle microseconds
+		microseconds := int64((floatSourceTime - float64(intSourceTime)) * 1e6)
+		sourceTime := fmt.Sprintf("%s.%06d", t.UTC().Format("2006-01-02 15:04:05"), microseconds)
+		const epsilon = 0.00000001
+		
+		var ssFormattedStr string
 		// var prev_bbo float64
+
 		for price, amounts := range priceMap {
-			// parser time
-			// collectionTime := fmt.Sprintf("%s.%06d", time.Now().Format("2006-01-02 15:04:05"), 0)
-			
-			floatSourceTime, err := strconv.ParseFloat(timestampStr, 64)
+
+			floatPrice, err := strconv.ParseFloat(price,64)
 			if err != nil {
 				return err
 			}
-			intSourceTime := int64(floatSourceTime)
-
-			// Convert Unix timestamp to time.Time
-			t := time.Unix(intSourceTime, 0)
-
-			// Format as string (YYYY-MM-DD HH:MM:SS.microseconds)
-			// Handle microseconds
-			microseconds := int64((floatSourceTime - float64(intSourceTime)) * 1e6)
-			sourceTime := fmt.Sprintf("%s.%06d", t.UTC().Format("2006-01-02 15:04:05"), microseconds)
-			const epsilon = 0.00000001
-
-			// floatPrice, err := strconv.ParseFloat(price,64)
-			// if err != nil {
-			// 	return err
-			// }
-
-			// configured BBO first 
-			var ssFormattedStr string
 
 			// if math.Abs(amounts.BuyAmount - 0) > epsilon && math.Abs(amounts.BuyAmount - 0) > epsilon {
 			// 	// prev_bbo, err = strconv.ParseFloat(price,64) // set as bbo
@@ -284,14 +292,30 @@ func ssFormatter(amountsMap *map[string]map[string]*CumulativeAmounts, foldernam
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
+				if (floatPrice > bbo.BestBid){
+					bbo.BestBid = floatPrice
+					bbo.BuyAmount = amounts.BuyAmount
+					bbo.BeginID = amounts.BeginID
+				}
+				
 			}
 			if math.Abs(amounts.SellAmount - 0.0) > epsilon {
 				ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%s,%f,,,,0", sourceTime, sourceTime, amounts.BeginID, 'P', "IEX", 2, price, amounts.SellAmount)
 				if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
 					return err
 				}
+				if (bbo.BestAsk == 0.0 || bbo.BestAsk < floatPrice){
+					bbo.BestAsk = floatPrice
+					bbo.SellAmount = amounts.SellAmount
+					bbo.BeginID = amounts.BeginID
+				}
 			}
-			
+		}
+
+		// process bbo
+		ssFormattedStr = fmt.Sprintf("%s,%s,%s,%c,%s,%d,%f,%f, %f, %f,,", sourceTime, sourceTime, bbo.BeginID, 'Q', "IEX", 1, bbo.BestBid,bbo.BuyAmount, bbo.BestAsk, bbo.SellAmount)
+			if _, err := file.WriteString(ssFormattedStr + "\n"); err != nil {
+				return err
 		}
 	}
 
